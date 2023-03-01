@@ -6,7 +6,7 @@ const {
 
 const getUsers = (req, res) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
-  .catch((err) => res.status(BAD_REQUEST).send({ message: err.message }));
+  .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
 
 const getUserById = (req, res) => User.findById(req.user._id)
   .then(((user) => {

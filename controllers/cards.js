@@ -8,7 +8,7 @@ const getCards = (req, res) => {
   Card.find({})
     .populate('owner')
     .then((cards) => res.status(STATUS_OK).send(cards))
-    .catch((err) => res.status(BAD_REQUEST).send({ message: err.message }));
+    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
 };
 const createCard = (req, res) => {
   const { name, link } = req.body;
