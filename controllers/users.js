@@ -22,14 +22,15 @@ const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
     .then((user) => {
-      const err = new Error('notValidUserData');
-      if (err.message === 'notValidUserData') {
-        res.status(BAD_REQUEST).send('Переданы некорректные данные при создании пользователя.');
-        return;
-      }
       res.status(STATUS_OK).send(userResFormat(user));
     })
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send('Переданы некорректные данные при создании карточки.');
+        return;
+      }
+      res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+    });
 };
 
 const updateUser = (req, res) => {
