@@ -11,7 +11,7 @@ const getUsers = (req, res) => User.find({})
 const getUserById = (req, res) => User.findById(req.user._id)
   .then(((user) => {
     if (!user) {
-      res.status(NOT_FOUND).send('Пользователь по указанному _id не найден.');
+      res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
       return;
     }
     res.status(STATUS_OK).send(userResFormat(user));
@@ -26,7 +26,7 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send('Переданы некорректные данные при создании карточки.');
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
         return;
       }
       res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -41,7 +41,7 @@ const updateUser = (req, res) => {
     })
     .then((user) => {
       if (!user) {
-        res.status(NOT_FOUND).send('Пользователь с указанным _id не найден.');
+        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
       res.status(STATUS_OK).send(userResFormat(user));
@@ -57,7 +57,7 @@ const updateAvatar = (req, res) => {
     })
     .then((user) => {
       if (!user) {
-        res.status(NOT_FOUND).send('Пользователь с указанным _id не найден.');
+        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
       res.status(STATUS_OK).send(userResFormat(user));

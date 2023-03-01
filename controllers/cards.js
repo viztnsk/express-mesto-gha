@@ -19,7 +19,7 @@ const createCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send('Переданы некорректные данные при создании карточки.');
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
         return;
       }
       res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
@@ -33,7 +33,7 @@ const deleteCard = (res, req) => {
     })
     .then((card) => {
       if (!card) {
-        res.status(NOT_FOUND).send('Карточка с указанным _id не найдена.');
+        res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
         return;
       }
       res.status(STATUS_OK).send(cardResFormat(card));
