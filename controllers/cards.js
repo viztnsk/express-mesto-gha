@@ -8,7 +8,7 @@ const getCards = (req, res) => {
   Card.find({})
     .populate('owner')
     .then((cards) => res.status(STATUS_OK).send(cards))
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 };
 const createCard = (req, res) => {
   const { name, link } = req.body;
@@ -22,7 +22,7 @@ const createCard = (req, res) => {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
         return;
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 const deleteCard = (res, req) => {
@@ -38,14 +38,20 @@ const deleteCard = (res, req) => {
       }
       res.status(STATUS_OK).send(cardResFormat(card));
     })
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
+        return;
+      }
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+    });
 };
 
 const likeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params._id,
     { $addToSet: { likes: req.user._id } },
-    { new: true },
+    { new: true, runValidators: true },
   )
     .orFail(() => {
       throw new Error('NotValidId');
@@ -60,7 +66,7 @@ const likeCard = (req, res) => {
       } if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
     });
 };
@@ -69,7 +75,7 @@ const dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params._id,
     { $pull: { likes: req.user._id } },
-    { new: true },
+    { new: true, runValidators: true },
   )
     .orFail(() => {
       throw new Error('NotValidId');
@@ -84,7 +90,7 @@ const dislikeCard = (req, res) => {
       } if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
     });
 };

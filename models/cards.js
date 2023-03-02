@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable import/no-extraneous-dependencies */
 const mongoose = require('mongoose');
 
@@ -5,8 +6,8 @@ const cardSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    minlength: 2,
-    maxlength: 30,
+    minlength: [2, `Минимальное количество символов - 2, введено - ${VALUE}`],
+    maxlength: [2, `Максимальное количество символов - 30, введено - ${VALUE}`],
   },
   link: {
     required: true,

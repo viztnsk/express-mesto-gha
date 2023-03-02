@@ -6,7 +6,7 @@ const {
 
 const getUsers = (req, res) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
-  .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+  .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 
 const getUserById = (req, res) => User.findById(req.user._id)
   .then(((user) => {
@@ -16,7 +16,13 @@ const getUserById = (req, res) => User.findById(req.user._id)
     }
     res.status(STATUS_OK).send(userResFormat(user));
   }))
-  .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+  .catch((err) => {
+    if (err.name === 'CastError') {
+      res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+  });
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
@@ -26,10 +32,10 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
         return;
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: err.message });
+      res.status(BAD_REQUEST).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 
@@ -46,7 +52,7 @@ const updateUser = (req, res) => {
       }
       res.status(STATUS_OK).send(userResFormat(user));
     })
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 };
 const updateAvatar = (req, res) => {
   const avatar = req.body;
@@ -62,7 +68,7 @@ const updateAvatar = (req, res) => {
       }
       res.status(STATUS_OK).send(userResFormat(user));
     })
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: err.message }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 };
 
 module.exports = {
