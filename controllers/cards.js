@@ -39,11 +39,13 @@ const deleteCard = (res, req) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
-        return;
+      if (err.name === 'NotValidId') {
+        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
+      } else if (err.name === 'CastError') {
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 

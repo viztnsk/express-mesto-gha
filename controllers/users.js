@@ -8,20 +8,21 @@ const getUsers = (req, res) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 
-const getUserById = (req, res) => User.findById(req.user._id)
+const getUserById = (req, res) => User.findById(req.params._id)
+  .orFail(() => {
+    throw new Error('NotValidId');
+  })
   .then(((user) => {
-    if (!user) {
-      res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
-      return;
-    }
     res.status(STATUS_OK).send(userResFormat(user));
   }))
   .catch((err) => {
     if (err.name === 'CastError') {
       res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-      return;
+    } else if (err.name === 'NotValidId') {
+      res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
+    } else {
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     }
-    res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
   });
 
 const createUser = (req, res) => {
@@ -33,9 +34,9 @@ const createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
-        return;
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 
@@ -46,18 +47,16 @@ const updateUser = (req, res) => {
       throw new Error('NotValidId');
     })
     .then((user) => {
-      // if (!user) {
-      //   res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      //   return;
-      // }
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
       if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-        return;
+      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 const updateAvatar = (req, res) => {
@@ -68,18 +67,16 @@ const updateAvatar = (req, res) => {
       throw new Error('NotValidId');
     })
     .then((user) => {
-      // if (!user) {
-      //   res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      //   return;
-      // }
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
       if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-        return;
+      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 
