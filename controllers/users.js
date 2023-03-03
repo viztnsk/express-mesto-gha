@@ -35,7 +35,7 @@ const createUser = (req, res) => {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
         return;
       }
-      res.status(BAD_REQUEST).send({ message: 'Возникла непредвиденная ошибка.' });
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
     });
 };
 
@@ -46,13 +46,19 @@ const updateUser = (req, res) => {
       throw new Error('NotValidId');
     })
     .then((user) => {
-      if (!user) {
+      // if (!user) {
+      //   res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
+      //   return;
+      // }
+      res.status(STATUS_OK).send(userResFormat(user));
+    })
+    .catch((err) => {
+      if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
-      res.status(STATUS_OK).send(userResFormat(user));
-    })
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+    });
 };
 const updateAvatar = (req, res) => {
   const avatar = req.body;
@@ -62,13 +68,19 @@ const updateAvatar = (req, res) => {
       throw new Error('NotValidId');
     })
     .then((user) => {
-      if (!user) {
+      // if (!user) {
+      //   res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
+      //   return;
+      // }
+      res.status(STATUS_OK).send(userResFormat(user));
+    })
+    .catch((err) => {
+      if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
         return;
       }
-      res.status(STATUS_OK).send(userResFormat(user));
-    })
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
+      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+    });
 };
 
 module.exports = {
