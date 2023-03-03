@@ -39,7 +39,7 @@ const deleteCard = (res, req) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
     .catch((err) => {
-      if (err.name === 'NotValidId') {
+      if (err.message === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
       }
     });

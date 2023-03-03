@@ -18,7 +18,7 @@ const getUserById = (req, res) => User.findById(req.user._id)
   .catch((err) => {
     if (err.name === 'CastError') {
       res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-    } else if (err.name === 'NotValidId') {
+    } else if (err.message === 'NotValidId') {
       res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
     } else {
       res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
@@ -50,7 +50,7 @@ const updateUser = (req, res) => {
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
-      if (err.name === 'NotValidId') {
+      if (err.message === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
       } else if (err.name === 'CastError' || err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
@@ -70,7 +70,7 @@ const updateAvatar = (req, res) => {
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
-      if (err.name === 'NotValidId') {
+      if (err.message === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
       } else if (err.name === 'CastError' || err.name === 'ValidationError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
