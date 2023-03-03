@@ -41,10 +41,6 @@ const deleteCard = (res, req) => {
     .catch((err) => {
       if (err.name === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      } else if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
       }
     });
 };
@@ -63,7 +59,7 @@ const likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки лайка.' });
         return;
       } if (err.message === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
@@ -87,7 +83,7 @@ const dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
+        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для снятии лайка.' });
         return;
       } if (err.message === 'NotValidId') {
         res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });

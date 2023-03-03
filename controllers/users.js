@@ -8,7 +8,7 @@ const getUsers = (req, res) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
 
-const getUserById = (req, res) => User.findById(req.params._id)
+const getUserById = (req, res) => User.findById(req.user._id)
   .orFail(() => {
     throw new Error('NotValidId');
   })
