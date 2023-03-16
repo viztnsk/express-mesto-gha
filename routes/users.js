@@ -1,12 +1,14 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const router = require('express').Router();
 const {
-  getUsers, getUserById, createUser, updateUser, updateAvatar,
+  getUsers, getUser, getUserById, updateUser, updateAvatar,
 } = require('../controllers/users');
+const { updateUserValidation, updateAvatarValidation } = require('../middlewares/validation');
 
 router.get('/', getUsers);
 router.get('/:userId', getUserById);
-router.post('/', createUser);
-router.patch('/me', updateUser);
-router.patch('/me/avatar', updateAvatar);
+router.get('/me', getUser);
+router.patch('/me', updateUserValidation, updateUser);
+router.patch('/me/avatar', updateAvatarValidation, updateAvatar);
 
 module.exports = router;

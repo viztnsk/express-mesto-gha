@@ -1,14 +1,22 @@
+/* eslint-disable consistent-return */
+/* eslint-disable import/no-extraneous-dependencies */
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/users');
 const { userResFormat } = require('../utils/utils');
 const {
-  BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, STATUS_OK,
+  STATUS_OK,
 } = require('../utils/constants');
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const UnauthorizedError = require('../errors/auth-error');
+const ConflictError = require('../errors/conflict-error');
 
-const getUsers = (req, res) => User.find({})
+const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
-  .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
+  .catch(next);
 
-const getUserById = (req, res) => User.findById(req.user._id)
+const getUserById = (req, res, next) => User.findById(req.user._id)
   .orFail(() => {
     throw new Error('NotValidId');
   })
@@ -17,69 +25,108 @@ const getUserById = (req, res) => User.findById(req.user._id)
   }))
   .catch((err) => {
     if (err.name === 'CastError') {
-      res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+      throw new BadRequestError();
     } else if (err.message === 'NotValidId') {
-      res.status(NOT_FOUND).send({ message: 'Пользователь по указанному _id не найден.' });
+      throw new NotFoundError();
     } else {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+      next();
     }
   });
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+const getUser = (req, res, next) => {
+  const { authorization } = req.headers;
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    throw new UnauthorizedError();
+  }
+  let payload;
+  const token = authorization.replace('Bearer ', '');
+  try {
+    payload = jwt.verify(token, 'some-secret-key');
+  } catch (err) {
+    throw new UnauthorizedError();
+  }
+  User.findById(payload._id)
+    .orFail(() => {
+      throw new NotFoundError();
+    })
+    .then((user) => res.send(user))
+    .catch(next);
+};
+
+const createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
     .then((user) => {
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
+      if (err.code === 11000) {
+        throw new ConflictError();
+      }
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании пользователя.' });
+        throw new BadRequestError();
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+        next();
       }
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .orFail(() => {
-      throw new Error('NotValidId');
+      throw new NotFoundError();
     })
     .then((user) => {
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        throw new BadRequestError();
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+        next();
       }
     });
 };
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   const avatar = req.body;
   User.findByIdAndUpdate(req.user._id, avatar, { new: true, runValidators: true })
     .populate(['name', 'about'])
     .orFail(() => {
-      throw new Error('NotValidId');
+      throw new NotFoundError();
     })
     .then((user) => {
       res.status(STATUS_OK).send(userResFormat(user));
     })
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      } else if (err.name === 'CastError' || err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные.' });
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        throw new BadRequestError();
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+        next();
+      }
+    });
+};
+
+const login = (req, res, next) => {
+  User.findUserByCredentials(req.body.email, req.body.password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.status(STATUS_OK).send({ token });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new UnauthorizedError();
+      } else {
+        next();
       }
     });
 };
 
 module.exports = {
-  getUsers, getUserById, createUser, updateUser, updateAvatar,
+  getUsers, getUser, getUserById, createUser, updateUser, updateAvatar, login,
 };

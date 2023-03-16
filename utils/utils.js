@@ -5,6 +5,8 @@ const userResFormat = (user) => {
     about: user.about,
     avatar: user.avatar,
     _id: user._id,
+    email: user.email,
+    password: user.password,
   };
 };
 
@@ -24,6 +26,7 @@ const cardResFormat = (card) => {
   };
 };
 
+const LINK_EXP = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&/=]*)$/;
 module.exports = {
-  userResFormat, cardResFormat,
+  userResFormat, cardResFormat, LINK_EXP,
 };

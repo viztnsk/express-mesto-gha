@@ -1,47 +1,49 @@
+/* eslint-disable no-shadow */
 const Card = require('../models/cards');
 const cardResFormat = require('../utils/utils');
 const {
-  BAD_REQUEST, NOT_FOUND, INTERNAL_SERVER_ERROR, STATUS_OK,
+  STATUS_OK,
 } = require('../utils/constants');
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const UnauthorizedError = require('../errors/auth-error');
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .populate('owner')
     .then((cards) => res.status(STATUS_OK).send(cards))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' }));
+    .catch(next);
 };
-const createCard = (req, res) => {
-  const { name, link } = req.body;
-  const owner = req.user._id;
-  Card.create({ name, link, owner })
+const createCard = (req, res, next) => {
+  Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
     .then((card) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
-        return;
+        throw new BadRequestError();
       }
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+      next();
     });
 };
-const deleteCard = (res, req) => {
+const deleteCard = (res, req, next) => {
   const { _id } = req.params._id;
-  Card.findByIdAndRemove(_id)
+  Card.findById(_id)
     .orFail(() => {
-      throw new Error('NotValidId');
+      throw new NotFoundError();
     })
     .then((card) => {
-      if (!card) {
-        res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена.' });
-        return;
+      const currentUser = req.user._id;
+      const cardOwner = card.owner._id.toString();
+      if (cardOwner === currentUser) {
+        return Card.findByIdAndRemove(req.params._id).then((card) => {
+          res.status(STATUS_OK).send(cardResFormat(card));
+        });
       }
-      res.status(STATUS_OK).send(cardResFormat(card));
+      throw new UnauthorizedError();
     })
-    .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(NOT_FOUND).send({ message: 'Пользователь с указанным _id не найден.' });
-      }
+    .catch(() => {
+      next();
     });
 };
 
@@ -52,19 +54,14 @@ const likeCard = (req, res) => {
     { new: true, runValidators: true },
   )
     .orFail(() => {
-      throw new Error('NotValidId');
+      throw new NotFoundError();
     })
     .then((card) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки лайка.' });
-        return;
-      } if (err.message === 'NotValidId') {
-        res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+        throw new BadRequestError();
       }
     });
 };
@@ -76,19 +73,14 @@ const dislikeCard = (req, res) => {
     { new: true, runValidators: true },
   )
     .orFail(() => {
-      throw new Error('NotValidId');
+      throw new NotFoundError();
     })
     .then((card) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для снятии лайка.' });
-        return;
-      } if (err.message === 'NotValidId') {
-        res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: 'Возникла непредвиденная ошибка.' });
+        throw new BadRequestError();
       }
     });
 };
