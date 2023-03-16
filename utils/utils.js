@@ -6,7 +6,6 @@ const userResFormat = (user) => {
     avatar: user.avatar,
     _id: user._id,
     email: user.email,
-    password: user.password,
   };
 };
 
