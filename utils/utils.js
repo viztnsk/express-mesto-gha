@@ -2,7 +2,7 @@ const userResFormat = (user) => ({
   name: user.name,
   about: user.about,
   avatar: user.avatar,
-  _id: user._id,
+  _id: user._id.toString(),
   email: user.email,
 });
 

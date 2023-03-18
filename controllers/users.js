@@ -13,20 +13,24 @@ const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(next);
 
-const getUserById = (req, res, next) => User.findById(req.params.userIdç)
-  .orFail(() => {
-    throw new NotFoundError();
-  })
-  .then(((user) => {
-    res.status(STATUS_OK).send(userResFormat(user));
-  }))
-  .catch((err) => {
-    if (err.name === 'CastError') {
-      next(new BadRequestError());
-    } else {
-      next(err);
-    }
-  });
+const getUserById = (req, res, next) => {
+  console.log(req.params.userId);
+  User.findById(req.params.userId)
+    .orFail(() => {
+      throw new NotFoundError();
+    })
+    .then(((user) => {
+      res.status(STATUS_OK).send(userResFormat(user));
+      console.log(userResFormat(user));
+    }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError());
+      } else {
+        next(err);
+      }
+    });
+};
 
 const getUser = (req, res, next) => {
   User.findById(req.user._id)
