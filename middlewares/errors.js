@@ -1,4 +1,4 @@
-const { INTERNAL_SERVER_ERROR } = require('../utils/constants');
+const { NOT_FOUND, INTERNAL_SERVER_ERROR } = require('../utils/constants');
 
 const errorHandler = (err, req, res, next) => {
   const { statusCode = INTERNAL_SERVER_ERROR, message } = err;
@@ -10,4 +10,14 @@ const errorHandler = (err, req, res, next) => {
   next();
 };
 
-module.exports = errorHandler;
+const wrongRouteHandler = (err, req, res, next) => {
+  const { statusCode = NOT_FOUND, message } = err;
+  res.status(statusCode).send({
+    message: statusCode === NOT_FOUND
+      ? 'Страница не найдена'
+      : message,
+  });
+  next();
+};
+
+module.exports = { errorHandler, wrongRouteHandler };

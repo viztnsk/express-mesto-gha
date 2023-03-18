@@ -7,7 +7,7 @@ const { loginValidation, registerValidation } = require('./middlewares/validatio
 const { auth } = require('./middlewares/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
-const errorHandler = require('./middlewares/errors');
+const { errorHandler, wrongRouteHandler } = require('./middlewares/errors');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -25,7 +25,7 @@ app.use(auth);
 
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
-// app.use(*, errorHandler);
+app.use('*', wrongRouteHandler);
 
 app.use(errors());
 app.use(errorHandler);
