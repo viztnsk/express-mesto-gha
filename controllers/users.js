@@ -14,7 +14,7 @@ const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(next);
 
-const getUserById = (req, res, next) => User.findById(req.params.cardId)
+const getUserById = (req, res, next) => User.findById(req.user._id)
   .orFail(() => {
     throw new NotFoundError();
   })
