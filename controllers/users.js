@@ -13,7 +13,7 @@ const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(next);
 
-const getUserById = (req, res, next) => User.findById(req.params.userId)
+const getUserById = (req, res, next) => User.findById(req.params.userIdç)
   .orFail(() => {
     throw new NotFoundError();
   })
