@@ -6,7 +6,7 @@ const {
 } = require('../utils/constants');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const ForbiddenError = require('../errors/ForbiddenError');
+const ForbiddenError = require('../errors/forbidden-error');
 
 const getCards = (req, res, next) => {
   Card.find({})
@@ -14,7 +14,9 @@ const getCards = (req, res, next) => {
     .catch(next);
 };
 const createCard = (req, res, next) => {
-  Card.create({ name: req.body.name, link: req.body.link, owner: req.user._id })
+  const { name, link } = req.body;
+  const owner = req.user._id;
+  Card.create({ name, link, owner })
     .then((card) => {
       res.status(STATUS_OK).send(cardResFormat(card));
     })
@@ -26,22 +28,26 @@ const createCard = (req, res, next) => {
     });
 };
 const deleteCard = (res, req, next) => {
-  const { _id } = req.params.cardId;
-  Card.findById(_id)
+  const { id } = req.params.cardId;
+  Card.findById(id)
     .orFail(() => {
       throw new NotFoundError();
     })
     .then((card) => {
       const currentUser = req.user._id;
       const cardOwner = card.owner._id.toString();
-      if (cardOwner === currentUser) {
-        return Card.findByIdAndRemove(req.params._id).then((card) => {
+      if (currentUser === cardOwner) {
+        Card.findByIdAndRemove(id).then((card) => {
           res.status(STATUS_OK).send(cardResFormat(card));
         });
+      } else {
+        next(new ForbiddenError());
       }
-      throw new ForbiddenError();
     })
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError());
+      }
       next(err);
     });
 };

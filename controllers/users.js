@@ -7,14 +7,13 @@ const {
 } = require('../utils/constants');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-// const UnauthorizedError = require('../errors/auth-error');
 const ConflictError = require('../errors/conflict-error');
 
 const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(next);
 
-const getUserById = (req, res, next) => User.findById(req.user._id)
+const getUserById = (req, res, next) => User.findById(req.params.userId)
   .orFail(() => {
     throw new NotFoundError();
   })
