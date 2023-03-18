@@ -1,5 +1,3 @@
-/* eslint-disable consistent-return */
-/* eslint-disable import/no-extraneous-dependencies */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
@@ -9,43 +7,30 @@ const {
 } = require('../utils/constants');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const UnauthorizedError = require('../errors/auth-error');
+// const UnauthorizedError = require('../errors/auth-error');
 const ConflictError = require('../errors/conflict-error');
 
 const getUsers = (req, res, next) => User.find({})
   .then((users) => res.status(STATUS_OK).send(users))
   .catch(next);
 
-const getUserById = (req, res, next) => User.findById(req.user._id)
+const getUserById = (req, res, next) => User.findById(req.params.cardId)
   .orFail(() => {
-    throw new Error('NotValidId');
+    throw new NotFoundError();
   })
   .then(((user) => {
     res.status(STATUS_OK).send(userResFormat(user));
   }))
   .catch((err) => {
     if (err.name === 'CastError') {
-      throw new BadRequestError();
-    } else if (err.message === 'NotValidId') {
-      throw new NotFoundError();
+      next(new BadRequestError());
     } else {
-      next();
+      next(err);
     }
   });
 
 const getUser = (req, res, next) => {
-  const { authorization } = req.headers;
-  if (!authorization || !authorization.startsWith('Bearer ')) {
-    throw new UnauthorizedError();
-  }
-  let payload;
-  const token = authorization.replace('Bearer ', '');
-  try {
-    payload = jwt.verify(token, 'some-secret-key');
-  } catch (err) {
-    throw new UnauthorizedError();
-  }
-  User.findById(payload._id)
+  User.findById(req.user._id)
     .orFail(() => {
       throw new NotFoundError();
     })
@@ -66,12 +51,12 @@ const createUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.code === 11000) {
-        throw new ConflictError();
+        next(new ConflictError());
       }
       if (err.name === 'ValidationError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -87,16 +72,15 @@ const updateUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
       } else {
-        next();
+        next(err);
       }
     });
 };
 const updateAvatar = (req, res, next) => {
   const avatar = req.body;
   User.findByIdAndUpdate(req.user._id, avatar, { new: true, runValidators: true })
-    .populate(['name', 'about'])
     .orFail(() => {
       throw new NotFoundError();
     })
@@ -105,9 +89,9 @@ const updateAvatar = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
       } else {
-        next();
+        next(err);
       }
     });
 };
@@ -119,11 +103,7 @@ const login = (req, res, next) => {
       res.status(STATUS_OK).send({ token });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new UnauthorizedError();
-      } else {
-        next();
-      }
+      next(err);
     });
 };
 

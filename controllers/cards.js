@@ -1,16 +1,15 @@
 /* eslint-disable no-shadow */
 const Card = require('../models/cards');
-const cardResFormat = require('../utils/utils');
+const { cardResFormat } = require('../utils/utils');
 const {
   STATUS_OK,
 } = require('../utils/constants');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const UnauthorizedError = require('../errors/auth-error');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 const getCards = (req, res, next) => {
   Card.find({})
-    .populate('owner')
     .then((cards) => res.status(STATUS_OK).send(cards))
     .catch(next);
 };
@@ -21,13 +20,13 @@ const createCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
       }
-      next();
+      next(err);
     });
 };
 const deleteCard = (res, req, next) => {
-  const { _id } = req.params._id;
+  const { _id } = req.params.cardId;
   Card.findById(_id)
     .orFail(() => {
       throw new NotFoundError();
@@ -40,16 +39,16 @@ const deleteCard = (res, req, next) => {
           res.status(STATUS_OK).send(cardResFormat(card));
         });
       }
-      throw new UnauthorizedError();
+      throw new ForbiddenError();
     })
-    .catch(() => {
-      next();
+    .catch((err) => {
+      next(err);
     });
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
-    req.params._id,
+    req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true, runValidators: true },
   )
@@ -61,14 +60,16 @@ const likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
+      } else {
+        next(err);
       }
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
-    req.params._id,
+    req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true, runValidators: true },
   )
@@ -80,7 +81,9 @@ const dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError();
+        next(new BadRequestError());
+      } else {
+        next();
       }
     });
 };

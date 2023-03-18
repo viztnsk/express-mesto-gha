@@ -1,6 +1,4 @@
-/* eslint-disable consistent-return */
 const jwt = require('jsonwebtoken');
-// const NotFoundError = require('../errors/not-found-error');
 const UnauthorizedError = require('../errors/auth-error');
 
 const auth = (req, res, next) => {
