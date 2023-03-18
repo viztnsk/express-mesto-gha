@@ -28,8 +28,7 @@ const createCard = (req, res, next) => {
     });
 };
 const deleteCard = (req, res, next) => {
-  const { id } = req.params.cardId;
-  Card.findById(id)
+  Card.findById(req.params.cardId)
     .orFail(() => {
       throw new NotFoundError();
     })
@@ -37,7 +36,7 @@ const deleteCard = (req, res, next) => {
       const currentUser = req.user._id;
       const cardOwner = card.owner._id.toString();
       if (currentUser === cardOwner) {
-        Card.findByIdAndRemove(id).then((card) => {
+        Card.findByIdAndRemove(req.params.cardId).then((card) => {
           res.status(STATUS_OK).send(cardResFormat(card));
         });
       } else {
