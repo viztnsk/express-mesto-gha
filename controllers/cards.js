@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow */
 const Card = require('../models/cards');
 const { cardResFormat } = require('../utils/utils');
 const {
@@ -10,6 +9,7 @@ const ForbiddenError = require('../errors/forbidden-error');
 
 const getCards = (req, res, next) => {
   Card.find({})
+    .populate("owner")
     .then((cards) => res.status(STATUS_OK).send(cards))
     .catch(next);
 };
